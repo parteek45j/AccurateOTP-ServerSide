@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "227644639108",
+    "firebase_url": "https://accurateotp.firebaseio.com",
+    "project_id": "accurateotp",
+    "storage_bucket": "accurateotp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:227644639108:android:5f5575a7f923ff11",
+        "android_client_info": {
+          "package_name": "com.example.parteek.accurateotp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "227644639108-bkn1nts3tvj2gcbeti6q08o6vdnah6ih.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.parteek.accurateotp",
+            "certificate_hash": "debadc88cf45f93ab7d629bd5e58d939547d682b"
+          }
+        },
+        {
+          "client_id": "227644639108-p8bhomld2n9npvu3rqo3scnf7er6utnd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVsrMHw3TtajJrYDEL6_YQiCDT9x2v-GY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "227644639108-p8bhomld2n9npvu3rqo3scnf7er6utnd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
