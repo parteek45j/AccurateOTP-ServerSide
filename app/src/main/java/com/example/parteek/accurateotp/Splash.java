@@ -73,7 +73,7 @@ public class Splash extends AppCompatActivity {
                 }, 3000);
             }
         }else{
-            Toast.makeText(this, "Internet Connection Required", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Internet Connection Required", Toast.LENGTH_LONG).show();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {

@@ -2,6 +2,8 @@ package com.example.parteek.accurateotp;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -41,6 +43,8 @@ public class login extends AppCompatActivity {
     String phone ="";
     String count="";
     int id=0;
+    ConnectivityManager connectivityManager;
+    NetworkInfo networkInfo;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +65,11 @@ public class login extends AppCompatActivity {
                     Phone.requestFocus();
                     return;
                 }
-                loginUser();
+                if (ConnectionCheck.isConnected(connectivityManager,networkInfo,login.this)) {
+                    loginUser();
+                }else {
+                    Toast.makeText(login.this, "Internet Connection Required", Toast.LENGTH_LONG).show();
+                }
 
             }
         });

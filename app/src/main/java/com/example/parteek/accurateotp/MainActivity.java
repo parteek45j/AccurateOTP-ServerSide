@@ -1,45 +1,55 @@
 package com.example.parteek.accurateotp;
 
-import android.Manifest;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     ImageView img;
     TextView txtresult;
     Button scan;
     Uri uri, imageUri;
+    RequestQueue requestQueue;
     public Bitmap mbitmap;
     public static final int PICK_IMAGE = 1;
-    Handler handler;
     CardView cardViewButton=null;
     CardView cardViewButton1=null;
     EditText editText=null;
@@ -50,11 +60,18 @@ public class MainActivity extends AppCompatActivity {
     int c=0;
     String name="";
     String version="";
+    String OTPCODE="";
     int printCount=0;
     TextView textViewVersion;
     EditText textViewName;
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
+    ConnectivityManager connectivityManager;
+    NetworkInfo networkInfo;
+    int count=0,id=0;
+    String userName="";
+    Dialog dialog;
+    ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,11 +79,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         preferences=getSharedPreferences(Util.AcuPrefs,MODE_PRIVATE);
         editor=preferences.edit();
+        count= Integer.parseInt(preferences.getString(Util.count,""));
+        id= preferences.getInt(Util.id,0);
+        userName=preferences.getString(Util.Name,"");
+        requestQueue= Volley.newRequestQueue(this);
         scan = (findViewById(R.id.scan));
         img = (findViewById(R.id.imgview));
         txtresult = (findViewById(R.id.txtResult));
         scan.setVisibility(View.GONE);
-        handler=new Handler();
+        pd=new ProgressDialog(this);
+        pd.setMessage("Generating OTP..");
+        pd.setCancelable(false);
     }
 
 
@@ -90,12 +113,13 @@ public class MainActivity extends AppCompatActivity {
                 String[] otp=serviceOTP.split(";");
                 name=otp[1];
                 version=otp[2];
-                showDialouge(otp[0]);
-            }else {
+                OTPCODE=otp[0];
+                showDialouge();
+            }else{
                 shareWhatsapp(serviceOTP);
             }
         }else {
-            Toast.makeText(this, "Select a QR code Or QR Code is Not Clear", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"Select a QR code Or QR Code is Not Clear", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -194,9 +218,9 @@ public class MainActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(intent,"Share Using"));
     }
 
-    void showDialouge(String Otp){
-        final String Otp1=Otp;
-        final Dialog dialog=new Dialog(MainActivity.this);
+    void showDialouge(){
+//        final String Otp1=Otp;
+        dialog=new Dialog(MainActivity.this);
         dialog.setContentView(R.layout.print_count_dialouge);
         dialog.setTitle("Print Count OTP");
         dialog.setCancelable(false);
@@ -210,13 +234,19 @@ public class MainActivity extends AppCompatActivity {
         cardViewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isVarified()){
-                    printCount=Integer.parseInt(editText.getText().toString());
-                    String hi=compileOTP(Otp1);
-                    shareWhatsapp(hi);
-                    dialog.dismiss();
-                    finish();
-                    Toast.makeText(MainActivity.this, hi, Toast.LENGTH_SHORT).show();
+                if (ConnectionCheck.isConnected(connectivityManager,networkInfo,MainActivity.this)) {
+                    if (isVarified()) {
+                        printCount = Integer.parseInt(editText.getText().toString());
+                        Log.e("data",count+"  "+printCount);
+                        if (count>printCount) {
+                             count=count-printCount;
+                             uploadDetails();
+                        }else {
+                            Toast.makeText(MainActivity.this, "Sorry Function Can't be Done", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }else {
+                    Toast.makeText(MainActivity.this, "Internet Connection Required", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -233,6 +263,9 @@ public class MainActivity extends AppCompatActivity {
         boolean isValidate=true;
         String i=editText.getText().toString();
         if (!(editText.getText().toString().contains("00") || editText.getText().toString().contains("000"))){
+            isValidate=false;
+            editText.setError("Not Multiple of 100");
+        }else if (Integer.parseInt(i)%100!=0){
             isValidate=false;
             editText.setError("Not Multiple of 100");
         }else if(editText.getText().toString().length()<0){
@@ -381,4 +414,51 @@ public class MainActivity extends AppCompatActivity {
         }
         return val1;
     }
+
+    void uploadDetails(){
+        pd.show();
+        StringRequest request=new StringRequest(Request.Method.POST, Util.updateAndInsert, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject object=new JSONObject(response);
+                    String message=object.getString("message");
+                    if (message.contains("Sucessfully")){
+                        pd.dismiss();
+                        String hi = compileOTP(OTPCODE);
+                            shareWhatsapp(hi);
+                            dialog.dismiss();
+                            finish();
+                    }else {
+                        pd.dismiss();
+                        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    pd.dismiss();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                pd.dismiss();
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> map=new HashMap<>();
+                Log.e("tatatta",version+" "+userName+" "+name+" "+id+" "+count);
+                map.put("Version",version);
+                map.put("Doneby",userName);
+                map.put("Client",name);
+                map.put("User_ID", String.valueOf(id));
+                map.put("Count", String.valueOf(count));
+                return map;
+            }
+        };
+        requestQueue.add(request);
+    }
 }
+
+
+

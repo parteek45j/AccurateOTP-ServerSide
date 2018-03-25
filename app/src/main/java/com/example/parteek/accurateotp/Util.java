@@ -6,7 +6,7 @@ package com.example.parteek.accurateotp;
 
 public class Util {
 
-    public static final String login="http://surajdogg.esy.es/AccuLogin.php";
+    public static final String updateAndInsert="http://rearvision.esy.es/atari/updateDetailsAccurate.php";
     public static final String login1="http://rearvision.esy.es/atari/AccuLogin.php";
 
     public static final String AcuPrefs="AccuratePrefs";

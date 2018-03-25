@@ -11,9 +11,6 @@ import static android.content.Context.CONNECTIVITY_SERVICE;
  */
 
 public class ConnectionCheck {
-    static ConnectivityManager connectivityManager;
-    static NetworkInfo networkInfo;
-    static Context context;
     public static boolean isConnected(ConnectivityManager connectivityManager,NetworkInfo networkInfo,Context context){
         connectivityManager=(ConnectivityManager)context.getSystemService(CONNECTIVITY_SERVICE);
         networkInfo=connectivityManager.getActiveNetworkInfo();
